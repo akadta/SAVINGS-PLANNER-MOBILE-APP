@@ -1,7 +1,12 @@
-import { Tabs } from "expo-router";
+// import { Tabs } from "expo-router";
+// import { Platform, View } from "react-native";
+// import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as Notifications from "expo-notifications";
+import { Tabs, useRouter } from "expo-router";
+import { useEffect } from "react";
 import { Platform, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
+import { registerForPush } from "../../lib/push";
 const RED = "#C8102E";
 const MUTED = "#9CA3AF";
 const BORDER = "#E5E7EB";
