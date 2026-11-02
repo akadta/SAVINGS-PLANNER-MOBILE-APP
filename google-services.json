@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "802487447808",
+    "project_id": "hgb-mobile",
+    "storage_bucket": "hgb-mobile.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:802487447808:android:5864034c063fbc5c0b03e5",
+        "android_client_info": {
+          "package_name": "com.hgb.customer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDD7uTUbm4D07LfE_BiTRglMyT9qgei3UU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

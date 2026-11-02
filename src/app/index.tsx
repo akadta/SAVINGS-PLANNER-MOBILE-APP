@@ -1,98 +1,55 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import axios from "axios";
+import { Redirect } from "expo-router";
+import { useEffect, useState } from "react";
+import Loader from "../components/Loader";
+import { api, clearToken, getToken } from "../lib/api";
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+// Opens first. Decides where to go:
+//   saved token that the server accepts -> dashboard
+//   no token / expired token            -> login
+export default function Index() {
+  const [target, setTarget] = useState<
+    "/pages/dashboard" | "/auth/login" | null
+  >(null);
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
+  useEffect(() => {
+    let active = true;
+
+    const check = async () => {
+      // keep the loader on screen at least 1 second so it never just flashes
+      const minWait = new Promise((r) => setTimeout(r, 1000));
+      let next: "/pages/dashboard" | "/auth/login" = "/auth/login";
+
+      try {
+        const token = await getToken();
+        if (token) {
+          await api.get("/me"); // token is valid
+          next = "/pages/dashboard";
+        }
+      } catch (err) {
+        const status = axios.isAxiosError(err) ? err.response?.status : null;
+
+        if (status === 401 || status === 403 || status === 404) {
+          // token expired / invalid / customer removed
+          await clearToken();
+          next = "/auth/login";
+        } else {
+          // server unreachable: keep the session and let the dashboard retry
+          next = "/pages/dashboard";
+        }
+      }
+
+      await minWait;
+      if (active) setTarget(next);
+    };
+
+    check();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (target) return <Redirect href={target} />;
+
+  return <Loader />;
 }
-
-export default function HomeScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
-
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
-  },
-  title: {
-    textAlign: 'center',
-  },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
-  },
-});
